@@ -132,7 +132,7 @@ func (pw *PlagueWatcher) StoreTxSummary(txs []*TxSummaryTransaction) {
 	sqlstring := `WITH input_rows(tx_hash, peer_id, tx_first_seen) AS (
 		VALUES %s
 	)
-	INSERT INTO tx_summary (tx_hash, peer_id, tx_first_seen)
+	INSERT INTO tx_summary_erigon (tx_hash, peer_id, tx_first_seen)
 	SELECT input_rows.tx_hash, input_rows.peer_id, input_rows.tx_first_seen
 	FROM input_rows
 	ON CONFLICT (tx_hash, peer_id) DO NOTHING;`
@@ -154,12 +154,12 @@ func (pw *PlagueWatcher) StoreTxs(txs []*PreparedTransaction, txsSummary []*TxSu
 	input_rows2(tx_hash, peer_id, tx_first_seen) AS (
 		VALUES %s
 	), ins AS (
-		INSERT INTO tx_fetched (tx_hash, tx_fee, gas_fee_cap, gas_tip_cap, tx_first_seen, receiver, signer, nonce)
+		INSERT INTO tx_fetched_erigon (tx_hash, tx_fee, gas_fee_cap, gas_tip_cap, tx_first_seen, receiver, signer, nonce)
 		SELECT input_rows.tx_hash, input_rows.tx_fee, input_rows.gas_fee_cap, input_rows.gas_tip_cap, input_rows.tx_first_seen, input_rows.receiver, input_rows.signer, input_rows.nonce FROM input_rows
 		ON CONFLICT (tx_hash) DO NOTHING
 		RETURNING id, tx_hash
 	 )
-	 INSERT INTO tx_summary (tx_hash, peer_id, tx_first_seen)
+	 INSERT INTO tx_summary_erigon (tx_hash, peer_id, tx_first_seen)
 	 SELECT tx_hash, peer_id, tx_first_seen
 	 FROM input_rows2
 	 ON CONFLICT (tx_hash, peer_id) DO NOTHING;`
@@ -183,7 +183,7 @@ func (pw *PlagueWatcher) StoreTxs(txs []*PreparedTransaction, txsSummary []*TxSu
 
 func (pw *PlagueWatcher) HandleBlocksFetched(block *types.Block, peer string, peerRemoteAddr string, peerLocalAddr string) error {
 	ts := time.Now().UnixMilli()
-	insertSQL := `INSERT INTO block_fetched(block_hash, block_number, first_seen_ts, peer, peer_remote_addr, peer_local_addr) VALUES($1,$2,$3,$4,$5,$6)`
+	insertSQL := `INSERT INTO block_fetched_erigon(block_hash, block_number, first_seen_ts, peer, peer_remote_addr, peer_local_addr) VALUES($1,$2,$3,$4,$5,$6)`
 	log.Warn("Inserting block", "block", block.NumberU64())
 	_, err := pw.db.Exec(insertSQL, block.Hash().Hex(), block.NumberU64(), ts, peer, peerRemoteAddr, peerLocalAddr)
 	return err
