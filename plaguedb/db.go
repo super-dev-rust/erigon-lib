@@ -7,13 +7,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/log"
-
 	types2 "github.com/ledgerwatch/erigon-lib/types"
+	"github.com/ledgerwatch/log/v3"
 
 	"github.com/hashicorp/golang-lru/v2/expirable"
-	_ "github.com/lib/pq"
+	//_ "github.com/lib/pq"
 )
 
 type PlagueWatcher struct {
@@ -181,14 +179,6 @@ func (pw *PlagueWatcher) StoreTxs(txs []*PreparedTransaction, txsSummary []*TxSu
 	}
 }
 
-func (pw *PlagueWatcher) HandleBlocksFetched(block *types.Block, peer string, peerRemoteAddr string, peerLocalAddr string) error {
-	ts := time.Now().UnixMilli()
-	insertSQL := `INSERT INTO block_fetched_erigon(block_hash, block_number, first_seen_ts, peer, peer_remote_addr, peer_local_addr) VALUES($1,$2,$3,$4,$5,$6)`
-	log.Warn("Inserting block", "block", block.NumberU64())
-	_, err := pw.db.Exec(insertSQL, block.Hash().Hex(), block.NumberU64(), ts, peer, peerRemoteAddr, peerLocalAddr)
-	return err
-}
-
 func OpenDB() (*sql.DB, error) {
 	host := os.Getenv("POSTGRES_HOST")
 	port := os.Getenv("POSTGRES_PORT")
@@ -208,6 +198,14 @@ func OpenDB() (*sql.DB, error) {
 	log.Warn("DB opened")
 	return db, nil
 }
+
+//func (pw *PlagueWatcher) HandleBlocksFetched(block *types.Block, peer string, peerRemoteAddr string, peerLocalAddr string) error {
+//	ts := time.Now().UnixMilli()
+//	insertSQL := `INSERT INTO block_fetched_erigon(block_hash, block_number, first_seen_ts, peer, peer_remote_addr, peer_local_addr) VALUES($1,$2,$3,$4,$5,$6)`
+//	log.Warn("Inserting block", "block", block.NumberU64())
+//	_, err := pw.db.Exec(insertSQL, block.Hash().Hex(), block.NumberU64(), ts, peer, peerRemoteAddr, peerLocalAddr)
+//	return err
+//}
 
 //
 //func (pw *PlagueWatcher) HandleTxsOld(txs []*types.Transaction, peerID string) error {
