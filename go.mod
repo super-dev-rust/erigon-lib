@@ -7,6 +7,7 @@ require (
 	github.com/ledgerwatch/log/v3 v3.8.0
 	github.com/ledgerwatch/secp256k1 v1.0.0
 	github.com/ledgerwatch/trackerslist v1.1.0
+	github.com/torquem-ch/mdbx-go v0.27.10
 )
 
 require (
@@ -20,7 +21,6 @@ require (
 	github.com/crate-crypto/go-kzg-4844 v0.3.0
 	github.com/deckarep/golang-set/v2 v2.3.0
 	github.com/edsrzf/mmap-go v1.1.0
-	github.com/erigontech/mdbx-go v0.35.0
 	github.com/go-stack/stack v1.8.1
 	github.com/google/btree v1.1.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
