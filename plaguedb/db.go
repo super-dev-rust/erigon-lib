@@ -11,7 +11,7 @@ import (
 	"github.com/ledgerwatch/log/v3"
 
 	"github.com/hashicorp/golang-lru/v2/expirable"
-	//_ "github.com/lib/pq"
+	_ "github.com/lib/pq"
 )
 
 type PlagueWatcher struct {

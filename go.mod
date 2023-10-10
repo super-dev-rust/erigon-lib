@@ -26,6 +26,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/holiman/uint256 v1.2.2
+	github.com/lib/pq v1.10.9
 	github.com/matryer/moq v0.3.2
 	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58
 	github.com/quasilyte/go-ruleguard/dsl v0.3.22
