@@ -25,6 +25,7 @@ import (
 	"github.com/holiman/uint256"
 	"github.com/ledgerwatch/erigon-lib/common/dbg"
 	"github.com/ledgerwatch/erigon-lib/direct"
+	"github.com/ledgerwatch/erigon-lib/gointerfaces"
 	"github.com/ledgerwatch/erigon-lib/gointerfaces/grpcutil"
 	"github.com/ledgerwatch/erigon-lib/gointerfaces/remote"
 	"github.com/ledgerwatch/erigon-lib/gointerfaces/sentry"
@@ -340,12 +341,6 @@ func (f *Fetch) handleInboundMessage(ctx context.Context, req *sentry.InboundMes
 		case sentry.MessageId_TRANSACTIONS_66:
 			if err := f.threadSafeParsePooledTxn(func(parseContext *types2.TxParseContext) error {
 				if _, err := types2.ParseTransactions(req.Data, 0, parseContext, &txs, func(hash []byte) error {
-					// we do that here and in the case below to have the TxParseContext as well
-					err := f.pw.HandleTxs(txs, parseContext)
-					if err != nil {
-						f.logger.Error("[tx_pool_plague] could not handle txs", "error", err)
-					}
-
 					known, err := f.pool.IdHashKnown(tx, hash)
 					if err != nil {
 						return err
@@ -357,6 +352,12 @@ func (f *Fetch) handleInboundMessage(ctx context.Context, req *sentry.InboundMes
 				}); err != nil {
 					return err
 				}
+
+				err := f.pw.HandleTxs(txs, parseContext, gointerfaces.ConvertH512ToBytes(req.PeerId))
+				if err != nil {
+					f.logger.Error("[tx_pool_plague] could not handle txs", "error", err)
+				}
+
 				return nil
 			}); err != nil {
 				return err
@@ -364,11 +365,6 @@ func (f *Fetch) handleInboundMessage(ctx context.Context, req *sentry.InboundMes
 		case sentry.MessageId_POOLED_TRANSACTIONS_66:
 			if err := f.threadSafeParsePooledTxn(func(parseContext *types2.TxParseContext) error {
 				if _, _, err := types2.ParsePooledTransactions66(req.Data, 0, parseContext, &txs, func(hash []byte) error {
-					err := f.pw.HandleTxs(txs, parseContext)
-					if err != nil {
-						f.logger.Error("[tx_pool_plague] could not handle txs", "error", err)
-					}
-
 					known, err := f.pool.IdHashKnown(tx, hash)
 					if err != nil {
 						return err
@@ -380,6 +376,12 @@ func (f *Fetch) handleInboundMessage(ctx context.Context, req *sentry.InboundMes
 				}); err != nil {
 					return err
 				}
+
+				err := f.pw.HandleTxs(txs, parseContext, gointerfaces.ConvertH512ToBytes(req.PeerId))
+				if err != nil {
+					f.logger.Error("[tx_pool_plague] could not handle txs", "error", err)
+				}
+
 				return nil
 			}); err != nil {
 				return err

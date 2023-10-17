@@ -2,16 +2,15 @@ package plaguedb
 
 import (
 	"database/sql"
+	"encoding/hex"
 	"fmt"
+	"github.com/hashicorp/golang-lru/v2/expirable"
+	types2 "github.com/ledgerwatch/erigon-lib/types"
+	"github.com/ledgerwatch/log/v3"
+	_ "github.com/lib/pq"
 	"os"
 	"strings"
 	"time"
-
-	types2 "github.com/ledgerwatch/erigon-lib/types"
-	"github.com/ledgerwatch/log/v3"
-
-	"github.com/hashicorp/golang-lru/v2/expirable"
-	_ "github.com/lib/pq"
 )
 
 type PlagueWatcher struct {
@@ -46,8 +45,8 @@ func Init() (*PlagueWatcher, error) {
 	return &PlagueWatcher{db: db, cache: cache}, nil
 }
 
-func (pw *PlagueWatcher) HandleTxs(txs types2.TxSlots, ctx *types2.TxParseContext) error {
-	preparedTxs, txsSummary := pw.prepareTransactions(txs, ctx)
+func (pw *PlagueWatcher) HandleTxs(txs types2.TxSlots, ctx *types2.TxParseContext, peerId []byte) error {
+	preparedTxs, txsSummary := pw.prepareTransactions(txs, ctx, peerId)
 	if len(preparedTxs) == 0 && len(txsSummary) == 0 {
 		log.Warn("No new txs")
 		return nil
@@ -67,11 +66,11 @@ func (pw *PlagueWatcher) HandleTxs(txs types2.TxSlots, ctx *types2.TxParseContex
 	return nil
 }
 
-func (pw *PlagueWatcher) prepareTransactions(txs types2.TxSlots, ctx *types2.TxParseContext) ([]*PreparedTransaction, []*TxSummaryTransaction) {
+func (pw *PlagueWatcher) prepareTransactions(txs types2.TxSlots, ctx *types2.TxParseContext, peerId []byte) ([]*PreparedTransaction, []*TxSummaryTransaction) {
 	// empty slice of prepared transactions
 	var preparedTxs []*PreparedTransaction
 	var txSummary []*TxSummaryTransaction
-	for i, tx := range txs.Txs {
+	for _, tx := range txs.Txs {
 		// check if tx is already in cache
 		var txHash = string(tx.IDHash[:])
 		if _, ok := pw.cache.Get(txHash); ok {
@@ -81,12 +80,13 @@ func (pw *PlagueWatcher) prepareTransactions(txs types2.TxSlots, ctx *types2.TxP
 		// append this transaction to final list of TxSummary
 		ts := time.Now().UnixMilli()
 		txSummary = append(txSummary, &TxSummaryTransaction{
-			peerId:      string(txs.Senders.At(i)[:]),
-			txHash:      txHash,
+			peerId:      hex.EncodeToString(peerId),
+			txHash:      "0x" + hex.EncodeToString(tx.IDHash[:]),
 			txFirstSeen: ts,
 		})
 
 		// TODO: will be the 2nd step
+		// TODO: sender pubkey -> hex.EncodeToString(txs.Senders.At(i)[:])
 		//gasFeeCap := tx.GasFeeCapUint().Clone().String()
 		//gasTipCap := tx.GasTipCapUint().String()
 		//fee := strconv.FormatUint(tx.GasPrice().Uint64()*tx.Gas(), 10)
